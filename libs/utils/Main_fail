@@ -1,0 +1,69 @@
+#include "utils.h"
+#include <stdio.h>
+#include "jni.h"
+#include <windows.h>
+
+void createVM();
+
+
+//https://en.wikipedia.org/wiki/Dynamic_loading
+
+
+int main(int argc, char argv[]) {
+    char msg[] = "message";
+    mylog(DEBUG, "test log %s", msg);
+    LOGI("use macro for log");
+    LOGP(INFO, "macro with local function\n");
+    //createVM();
+    //loadVMDLL();
+}
+
+void createVM() {
+    printf("start create jvm\n");
+    JavaVM *jvm;       /* denotes a Java VM */
+    JNIEnv *env;       /* pointer to native method interface */
+    JavaVMInitArgs vm_args; /* JDK/JRE 6 VM initialization arguments */
+    JavaVMOption options[4];
+    options[0].optionString = "-Djava.class.path=d:/ztestfiles/code"; /* user classes */
+    options[1].optionString = "-Djava.compiler=NONE";           /* disable JIT */
+    options[2].optionString = "-verbose:jni, class";                   /* print JNI-related messages */
+    options[3].optionString = "-Djava.library.path=";  /* set native library path */
+    vm_args.version = JNI_VERSION_1_2;
+    vm_args.nOptions = 1;
+    vm_args.options = options;
+    vm_args.ignoreUnrecognized = JNI_TRUE;
+    /* load and initialize a Java VM, return a JNI interface
+     * pointer in env */
+
+    jint jrst = JNI_CreateJavaVM(&jvm, (void**)&env, &vm_args);
+    return;
+    if (jrst < 0 || jvm == NULL || env == NULL) {
+        printf("create jvm failed\n");
+        return;
+    } else {
+        printf("create jvm successful\n");
+    }
+    /* invoke the Main.test method using the JNI */
+    if ((*env)->ExceptionCheck(env)) {
+        (*env)->ExceptionDescribe(env);
+        (*env)->ExceptionOccurred(env);
+        printf("evn error occurrred\n");
+        if (jvm != NULL) (*jvm)->DestroyJavaVM(jvm);
+        return;
+    } else {
+        printf("found class\n");
+    }
+    jclass cls = (*env)->FindClass(env, "PostfixIncrement");
+    if (cls != NULL) {
+        printf("find cls\n");
+    } else {
+        printf("not found class\n");
+        return;
+    }
+    jmethodID mid = (*env)->GetStaticMethodID(env, cls, "main", "([Ljava/lang/String;)V");
+    (*env)->CallStaticVoidMethod(env, cls, mid);
+    /* We are done. */
+    (*jvm)->DestroyJavaVM(jvm);
+}
+
+
