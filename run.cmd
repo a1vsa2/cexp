@@ -2,17 +2,20 @@
 
 
 setlocal
-set exedir=bin
+set exedir=out
 :run
-if "%~1" neq "" (%exedir%\%1.exe)
-goto end
+
+if exist %exedir%/%~1 (
+    %exedir%\%1.exe 
+    goto end
+)
 
 
 :: ======================= discard
 setlocal
 
 
-pushd bin
+pushd %exedir%
 set exename=%1
 call :getArgsAfter 2 "%*"
 
@@ -28,7 +31,7 @@ endlocal disabledelayedexpansion && set objs=%objs%
 
 popd
 
-if "%objs%" neq "" (make exe exename="%exename%" ts="%objs%")
+if "%objs%" neq "" (make -f template.mk exe EXENAME="%exename%" ts="%objs%")
 
 
 

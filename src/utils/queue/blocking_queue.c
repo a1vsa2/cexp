@@ -31,9 +31,9 @@ void enqueue(Queue* q, void* data, int len) {
     while(q->size >= glimitSize && !stop) {
         // stolen wake-up: 条件变量触发后会阻塞直到获取到锁，在此期间数据状态可能已被另外线程改变
         SleepConditionVariableCS(&q->notFull, &q->lock, INFINITE);
-        if (q->size == glimitSize) {
-            printf("#### enqueue: spurious wake\n");
-        }
+        // if (q->size == glimitSize) {
+        //     printf("#### enqueue: spurious wake\n");
+        // }
     }
     if (stop) {
         free(newNode);
@@ -58,9 +58,6 @@ void* dequeue(Queue* q, int* len) {
     EnterCriticalSection(&q->lock);
     while(q->size == 0 && !stop) {
         SleepConditionVariableCS(&q->notEmpty, &q->lock, INFINITE);
-        if (q->size == 0) {
-            printf("#### dequeue: spurious wake %d\n", *len);
-        }
     }
     if (stop) {
         LeaveCriticalSection(&q->lock);

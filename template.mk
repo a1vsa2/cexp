@@ -4,8 +4,8 @@ This makefile requires GNU Make.
 endif
 
 #######################################
-# for submakefile
-ProjectDir ?=
+# end with /
+ProjectDir ?=  
 SCRDIR_PREFIX ?=
 SRCDIRS ?=
 
@@ -25,12 +25,13 @@ CONTROLFLAGS= -fno-default-inline
 # COMPILE.c = $(CC) $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
 
 
-BUILDDIR =$(ProjectDir)/$(OUTNAME)
+BUILDDIR =$(ProjectDir)$(OUTNAME)/
+OBJDIR_PRE=$(ProjectDir)$(OUTNAME)/$(SCRDIR_PREFIX)
+
 # deferred assignment
 SOURCES ?= $(patsubst ./%,%,$(foreach dir, $(SRCDIRS), $(wildcard $(dir)/*.c)))
-#$(info $(SOURCES))
 #OBJDIRS ?= $(subst /,\,$(addprefix $(BUILDDIR)\$(SCRDIR_PREFIX)\,$(SRCDIRS))) ## cmd del path
-OBJDIRS ?= $(patsubst %/.,%,$(addprefix $(BUILDDIR)/$(SCRDIR_PREFIX),$(SRCDIRS)))
+OBJDIRS ?= $(patsubst %/.,%,$(addprefix $(OBJDIR_PRE),$(SRCDIRS)))
 OBJS = $(notdir $(SOURCES:.c=.o))
 EXENAME ?= default
 
@@ -50,47 +51,46 @@ allObj: $(OBJS)
 # deferred
 
 ifeq "" "$(filter clean%,$(MAKECMDGOALS))"
-include $(foreach dep, $(SOURCES:.c=.d), $(BUILDDIR)/$(SCRDIR_PREFIX)$(dep))
+include $(foreach dep, $(SOURCES:.c=.d), $(OBJDIR_PRE)$(dep))
 endif
 
 
 %.o: %.c | $(OBJDIRS)
 	@echo building object $@
-	$(COMPILE.c) $(INCLUDE_PATH) -o $(BUILDDIR)/$(SCRDIR_PREFIX)$(subst .c,.o,$<) $<
+	$(COMPILE.c) $(INCLUDE_PATH) -o $(OBJDIR_PRE)$(subst .c,.o,$<) $<
 
-$(BUILDDIR)/$(SCRDIR_PREFIX)%.d:%.c | $(OBJDIRS)
+$(OBJDIR_PRE)%.d:%.c | $(OBJDIRS)
 	@echo generating dependency file $@  $<
 	@set -e; rm -f $@; \
-	$(CC) $(INCLUDE_PATH) -MM  $< > $(BUILDDIR)/tmp.$$$$; \
-	sed 's,\($$*\)\.o[: ]*,\1.o $(notdir $@): ,' $(BUILDDIR)/tmp.$$$$ > \
-	$(BUILDDIR)/$(SCRDIR_PREFIX)$(subst .c,.d,$<); rm -f $(BUILDDIR)/tmp.$$$$
+	$(CC) $(INCLUDE_PATH) -MM  $< > $(OBJDIR_PRE)tmp.$$$$; \
+	sed 's,\($$*\)\.o[: ]*,\1.o $(notdir $@): ,' $(OBJDIR_PRE)tmp.$$$$ > \
+	$(OBJDIR_PRE)$(subst .c,.d,$<); rm -f $(OBJDIR_PRE)tmp.$$$$
 #	$(CC) $(INCLUDE_PATH) -MM $< > $(BUILDDIR)/$(SCRDIR_PREFIX)$(subst .c,.d,$<)
 #	(@echo generate dependency file failed; @del $@)
 
 
 %.dll:$(OBJS)
 	@echo building shared library $@
-	$(CC) -shared -o0 -o $(BUILDDIR)/$@  $(OBJS) $(DLLS)
+	$(CC) -shared -o0 -o $(OBJDIR_PRE)/$@  $(OBJS) $(DLLS)
 
 $(OBJDIRS):
 	@echo creating dir: $@
 	mkdir -p $@
 
 define gen_exe
-	@echo creating executeable from $1
-	$(CC) -o $(BUILDDIR)/$(EXENAME).exe $1 $(DLLS)
+	@echo creating executeable from $1 $2
+	$(CC) -o $(BUILDDIR)$(EXENAME).exe $1 $(DLLS)
 endef
 
 run:
 ifneq "" "$(EXENAME)"
-	$(BUILDDIR)/$(EXENAME).exe
+	$(BUILDDIR)$(EXENAME).exe
 endif
 
 exe:$(ts)
 ifneq "" "$(ts)"
-	@echo generating executeable
-	$(call gen_exe, $<)
-
+#	@echo generating executeable $^
+#	$(call gen_exe, $(subst \,/,$^))
 endif
 
 .ONESHELL:
@@ -133,11 +133,11 @@ clean:
 
 #private subdirs=$(shell dir /AD /B /S src)
 
-$(info $(wildcard src/*.c))
+
 submfs += $(foreach subdir,$(subdirs),$(wildcard $(subdir)/*.mk) $(wildcard $(subdir)/makefile))
 submakes:
 # 	@for %%i in ($(submfs)) do make -C %%~dpi -f %%~nxi
-	@for subdir in $(submfs) ; do echo $$subdir; done
+	@for sf in $(submfs) ; do make -C  $$(dirname $$sf) -f $$(basename $$sf); done
 
 
 .PHONY: clean_obj clean
