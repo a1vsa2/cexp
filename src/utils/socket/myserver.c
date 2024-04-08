@@ -9,7 +9,7 @@
 
 
 #define BUF_SIZE 512
-#define NUM_THREADS 2   // not greate than processor num
+#define NUM_THREADS 1   // not greate than processor num
 
 typedef struct {
     SOCKET cSocket;
@@ -91,6 +91,10 @@ int startIocpServer(int port) {
     if (g_sSocket != INVALID_SOCKET) {
         closesocket(g_sSocket);
     }
+    CloseHandle(g_hcp);
+    // for (int i = 0; i < NUM_THREADS; i++) {
+    //     CloseHandle(hts[i]);
+    // }
     if (winsock_init) {
         WSACleanup();
         winsock_init = 0;

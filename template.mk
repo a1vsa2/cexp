@@ -25,8 +25,8 @@ CONTROLFLAGS= -fno-default-inline
 # COMPILE.c = $(CC) $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
 
 
-BUILDDIR =$(ProjectDir)$(OUTNAME)/
-OBJDIR_PRE=$(ProjectDir)$(OUTNAME)/$(SCRDIR_PREFIX)
+BUILDDIR =$(ProjectDir)$(OUTNAME)
+OBJDIR_PRE=$(ProjectDir)/$(OUTNAME)/$(SCRDIR_PREFIX)
 
 # deferred assignment
 SOURCES ?= $(patsubst ./%,%,$(foreach dir, $(SRCDIRS), $(wildcard $(dir)/*.c)))
@@ -37,7 +37,8 @@ EXENAME ?= default
 
 vpath
 vpath %.c $(SRCDIRS)
-vpath %.o $(OBJDIRS)
+#vpath %.o $(OBJDIRS)
+vpath %.o $(BUILDDIR)
 vpath %.d $(OBJDIRS)
 # vpath %.dll $(OBJDIRS)
 
@@ -57,10 +58,11 @@ endif
 
 %.o: %.c | $(OBJDIRS)
 	@echo building object $@
-	$(COMPILE.c) $(INCLUDE_PATH) -o $(OBJDIR_PRE)$(subst .c,.o,$<) $<
+#	$(COMPILE.c) $(INCLUDE_PATH) -o $(OBJDIR_PRE)$(subst .c,.o,$<) $<
+	$(COMPILE.c) $(INCLUDE_PATH) -o $(BUILDDIR)/$@ $<
 
 $(OBJDIR_PRE)%.d:%.c | $(OBJDIRS)
-	@echo generating dependency file $@  $<
+	@echo generating dependency file $@
 	@set -e; rm -f $@; \
 	$(CC) $(INCLUDE_PATH) -MM  $< > $(OBJDIR_PRE)tmp.$$$$; \
 	sed 's,\($$*\)\.o[: ]*,\1.o $(notdir $@): ,' $(OBJDIR_PRE)tmp.$$$$ > \
@@ -79,12 +81,12 @@ $(OBJDIRS):
 
 define gen_exe
 	@echo creating executeable from $1 $2
-	$(CC) -o $(BUILDDIR)$(EXENAME).exe $1 $(DLLS)
+	$(CC) -o $(BUILDDIR)/$(EXENAME).exe $1 $(DLLS)
 endef
 
 run:
 ifneq "" "$(EXENAME)"
-	$(BUILDDIR)$(EXENAME).exe
+	$(BUILDDIR)/$(EXENAME).exe
 endif
 
 exe:$(ts)
