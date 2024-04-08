@@ -3,10 +3,12 @@
 source utils.sh
 cdir=$(pwd)
 
-if [ ! -d cdir/bin ]; then
+exit 0
+if [ ! -d ${cdir}/bin ]; then
     echo "current dir: $cdir"
-    mkdir -p cdir/bin
+    mkdir -p ${cdir}/bin
 fi
+echo xx$?
 
 #make -C ./libs
 if [ ! $? ]; then

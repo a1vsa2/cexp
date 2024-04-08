@@ -1,0 +1,383 @@
+# # SHELL = /bin/bash
+# ifneq (,)
+# This makefile requires GNU Make.
+# endif
+
+
+# #######################################
+# INCLUDE_PATH = -Ilibs\utils\include
+# #INCLUDE_PATH += -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/win32
+# SRCDIRS = libs\utils\socket
+# DLLS = -lws2_32
+# OUTNAME=bin
+# BUILDDIR ?= d:\workspace\vscode\cexp\$(OUTNAME)
+
+# #############################################
+
+# CC=gcc
+# #CPPFLAGS += -MMD -MP	# preprocessor option
+# CFLAGS = -g -Winline # c compiler flags
+# #CXXFLAGS = -Winline  # c++ compiler flags
+# CONTROLFLAGS= -fno-default-inline
+# # COMPILE.c = $(CC) $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
+
+# SOURCES = $(foreach dir, $(SRCDIRS), $(wildcard $(dir)/*.c))
+# OBJDIRS := $(addprefix $(BUILDDIR)\,$(SRCDIRS))
+# #OBJDIRS += $(OTHER_OBJ_DIR)
+# OBJDIRS := $(subst /,\,$(OBJDIRS)) ## cmd del path
+# OBJS := $(SOURCES:.c=.o)
+# EXENAME ?= default
+
+# vpath
+# vpath %.o $(BUILDDIR)
+# vpath %.c $(SRCDIRS)
+# vpath %.d $(BUILDDIR)
+# vpath %.dll $(BUILDDIR)
+
+# .DEFAULT_GOAL=allObj
+
+# allObj: $(OBJS)
+
+# #buildTarget:$(notdir $(CURDIR)).dll
+
+# ifeq "" "$(filter clean%,$(MAKECMDGOALS))"
+# include $(addprefix $(OUTNAME)/,$(SOURCES:.c=.d))
+# endif
+
+# define gen_exe
+# 	@echo creating executeable from $1
+# 	$(CC) -o $(BUILDDIR)/$(EXENAME).exe $1 $(DLLS)
+# endef
+
+# run:
+# 	ifeq "" $1
+# 	$(BUILDDIR)/$(EXENAME).exe
+
+# %.o: %.c | $(OBJDIRS)
+# 	@echo building object $@
+# 	$(COMPILE.c) $(INCLUDE_PATH) -o $(BUILDDIR)/$(subst .c,.o,$<) $<
+
+# $(OUTNAME)/%.d: %.c | $(OBJDIRS)
+# 	@echo generating dependency file $@
+# 	$(CC) $(INCLUDE_PATH) -MM $< > $@ || (@echo generate dependency file failed; @del $@)
+# #	TODO add target prefix
+
+
+# %.dll:$(OBJS)
+# 	@echo building shared library $@
+# 	$(CC) -shared -o0 -o $(BUILDDIR)/$@  $(OBJS) $(DLLS)
+
+# exe:
+# ifneq "" "$(ts)"
+# 	@echo generating executeable from $(ts)
+# 	$(call gen_exe, $(ts))
+# #	$(call gen_exe, $(foreach oo, $(ts), $(OUTNAME)\$(subst .c,.o,$(wildcard $(SRCDIRS)\$(subst .o,.c,$(oo))))))
+# endif
+
+# $(OBJDIRS):
+# 	-@echo creating dir: $@
+# 	mkdir $(subst /,\,$@)
+
+# .ONESHELL:
+# clean_obj:
+# 	for %%i in ($(subst /,\\,$(OBJDIRS))) do (
+# 		if exist %%i (
+# 			echo clear directory: %%i
+# 			del /Q %%i\\*.*
+# 		)
+# 	) 
+
+# .ONESHELL:
+# clean_all:
+# 	for %%i in ($(OBJDIRS)) do (
+# 		if exist %%i (
+# 			@rmdir /Q /S  %%i
+# 			@echo deleted directory: %%i
+# 		)
+# 	)
+
+
+# .PHONY: clean_obj clean_all
+
+# .SILENT:clean_obj clean_all
+
+
+
+
+
+
+# # SHELL = /bin/bash
+# ifneq (,)
+# This makefile requires GNU Make.
+# endif
+
+
+# #######################################
+# # for submakefile
+# ROOTDIR ?= .
+
+# INCLUDE_PATH ?= -Isrc/includes -Isrc/utils/include
+# #INCLUDE_PATH += -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/win32
+# SRCDIRS ?= src\utils\socket
+# DLLS ?= -lws2_32
+# OUTNAME ?=bin
+# #############################################
+
+
+# CC=gcc
+# #CPPFLAGS += -MMD -MP	# preprocessor option
+# CFLAGS = -g -Winline # c compiler flags
+# #CXXFLAGS = -Winline  # c++ compiler flags
+# CONTROLFLAGS= -fno-default-inline
+# # COMPILE.c = $(CC) $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
+
+
+# BUILDDIR =$(ROOTDIR)\bin
+# # deferred assignment
+# SOURCES ?= $(foreach dir, $(SRCDIRS), $(wildcard $(dir)/*.c))
+# OBJDIRS ?= $(subst /,\,$(addprefix $(BUILDDIR)\,$(SRCDIRS))) ## cmd del path
+# OBJS = $(notdir $(SOURCES:.c=.o))
+# EXENAME ?= default
+
+# vpath
+# vpath %.c $(SRCDIRS)
+# vpath %.o $(OBJDIRS)
+# vpath %.d $(BUILDDIR)
+# vpath %.dll $(OBJDIRS)
+
+# .DEFAULT_GOAL=allObj
+
+# allObj: $(OBJS) 
+
+# #buildTarget:$(notdir $(CURDIR)).dll
+
+# # immediate : immediate ; deferred
+# # deferred
+
+# ifeq "" "$(filter clean%,$(MAKECMDGOALS))"
+# include $(foreach dep, $(SOURCES:.c=.d), $(OUTNAME)/$(dep))
+# endif
+
+
+# %.o: %.c | $(OBJDIRS)
+# 	@echo building object $@
+# 	$(COMPILE.c) $(INCLUDE_PATH) -o $(BUILDDIR)/$(subst .c,.o,$<) $<
+
+# $(OUTNAME)/%.d:%.c | $(OBJDIRS)
+# 	@echo generating dependency file $@
+# 	$(CC) $(INCLUDE_PATH) -MM $< > $(subst /,\,$@)
+# #	(@echo generate dependency file failed; @del $@)
+
+
+# %.dll:$(OBJS)
+# 	@echo building shared library $@
+# 	$(CC) -shared -o0 -o $(BUILDDIR)/$@  $(OBJS) $(DLLS)
+
+# $(OBJDIRS):
+# 	-@echo creating dir: $@
+# 	mkdir $(subst /,\,$@)
+
+
+# define gen_exe
+# 	@echo creating executeable from $1
+# 	$(CC) -o $(BUILDDIR)/$(EXENAME).exe $1 $(DLLS)
+# endef
+
+# exe:$(ts)
+# ifneq "" "$(ts)"
+# 	@echo generating executeable
+# 	$(call gen_exe, $<)
+
+# endif
+
+
+
+
+
+
+
+# .ONESHELL:
+# clean_obj:
+# 	for %%i in ($(OBJDIRS)) do (
+# 		if exist %%i (
+# 			echo clear directory: %%i
+# 			del /Q %%i\\*.*
+# 		)
+# 	) 
+
+# .ONESHELL:
+# clean_all:
+# 	if exist $(BUILDDIR) (
+# 		@rmdir /Q /S  $(BUILDDIR)
+# 		@echo output directory deleted
+# 	)
+
+# #private subdirs=$(shell dir /AD /B /S src)
+# subdirs =src
+# submfs += $(foreach subdir,$(subdirs),$(wildcard $(subdir)/*.mk) $(wildcard $(subdir)/makefile))
+# submakes:
+# 	@for %%i in ($(submfs)) do make -C %%~dpi -f %%~nxi
+
+
+
+# .PHONY: clean_obj clean_all
+
+# .SILENT:clean_obj clean_all
+
+
+# #.NOTPARALLEL: notparallel  ## MS-DOS doesn't support multi-processing.
+
+
+
+
+
+
+# #SHELL = cmd   D:/dev_tools/w64devkit-1.21.0/bin/sh.exe
+# ifneq (,)
+# This makefile requires GNU Make.
+# endif
+
+# #######################################
+# # for submakefile
+# ProjectDir ?= ../..
+# SCRDIR_PREFIX = utils/
+# SRCDIRS ?= socket
+
+# INCLUDE_PATH ?= -I../includes -Iinclude
+# #INCLUDE_PATH += -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/win32
+
+# DLLS ?= -lws2_32
+# OUTNAME ?=out
+# #############################################
+
+
+# CC=gcc
+# #CPPFLAGS += -MMD -MP	# preprocessor option
+# CFLAGS = -g -Winline # c compiler flags
+# #CXXFLAGS = -Winline  # c++ compiler flags
+# CONTROLFLAGS= -fno-default-inline
+# # COMPILE.c = $(CC) $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c
+
+
+# BUILDDIR =$(ProjectDir)/$(OUTNAME)
+# # deferred assignment
+# SOURCES ?= $(foreach dir, $(SRCDIRS), $(wildcard $(dir)/*.c))
+# #OBJDIRS ?= $(subst /,\,$(addprefix $(BUILDDIR)\$(SCRDIR_PREFIX)\,$(SRCDIRS))) ## cmd del path
+# OBJDIRS ?= $(addprefix $(BUILDDIR)/$(SCRDIR_PREFIX),$(SRCDIRS))
+# OBJS = $(notdir $(SOURCES:.c=.o))
+# EXENAME ?= default
+
+# vpath
+# vpath %.c $(SRCDIRS)
+# vpath %.o $(OBJDIRS)
+# vpath %.d $(OBJDIRS)
+# # vpath %.dll $(OBJDIRS)
+
+# .DEFAULT_GOAL=allObj
+
+# allObj: $(OBJS) 
+
+# #buildTarget:$(notdir $(CURDIR)).dll
+
+# # immediate : immediate ; deferred
+# # deferred
+
+# ifeq "" "$(filter clean%,$(MAKECMDGOALS))"
+# include $(foreach dep, $(SOURCES:.c=.d), $(BUILDDIR)/$(SCRDIR_PREFIX)$(dep))
+# endif
+
+
+# %.o: %.c | $(OBJDIRS)
+# 	@echo building object $@
+# 	$(COMPILE.c) $(INCLUDE_PATH) -o $(BUILDDIR)/$(SCRDIR_PREFIX)$(subst .c,.o,$<) $<
+
+# $(BUILDDIR)/$(SCRDIR_PREFIX)%.d:%.c | $(OBJDIRS)
+# 	@echo generating dependency file $@
+# 	@set -e; rm -f $@; \
+# 	$(CC) $(INCLUDE_PATH) -MM  $< > $(BUILDDIR)/tmp.$$$$; \
+# 	sed 's,\($$*\)\.o[: ]*,\1.o $(notdir $@): ,' $(BUILDDIR)/tmp.$$$$ > \
+# 	$(BUILDDIR)/$(SCRDIR_PREFIX)$(subst .c,.d,$<); rm -f $(BUILDDIR)/tmp.$$$$
+# #	$(CC) $(INCLUDE_PATH) -MM $< > $(BUILDDIR)/$(SCRDIR_PREFIX)$(subst .c,.d,$<)
+# #	(@echo generate dependency file failed; @del $@)
+
+
+# %.dll:$(OBJS)
+# 	@echo building shared library $@
+# 	$(CC) -shared -o0 -o $(BUILDDIR)/$@  $(OBJS) $(DLLS)
+
+# $(OBJDIRS):
+# 	@echo creating dir: $@
+# 	mkdir -p $@
+
+# define gen_exe
+# 	@echo creating executeable from $1
+# 	$(CC) -o $(BUILDDIR)/$(EXENAME).exe $1 $(DLLS)
+# endef
+
+# run:
+# ifneq "" "$(EXENAME)"
+# 	$(BUILDDIR)/$(EXENAME).exe
+# endif
+
+# exe:$(ts)
+# ifneq "" "$(ts)"
+# 	@echo generating executeable
+# 	$(call gen_exe, $<)
+
+# endif
+
+# test:
+# 	sed 's,\($*\)\.o[ :]*,\1.o xx.d: ,' < xx.d > dep$$$$.d
+
+# .ONESHELL:
+# clean_obj:
+# 	for dir in $(OBJDIRS) 
+# 	do 
+# 		if [ -e $$dir ]
+# 		then
+# 			echo clear directory $$dir
+# 			rm -rf $$dir
+# 		fi
+# 	done
+
+# .ONESHELL:
+# clean:
+# 	if [ -e $(BUILDDIR) ]
+# 	then
+# 		echo clear build directory $(BUILDDIR)
+# 		rm -rf $(BUILDDIR)
+# 	fi
+
+
+# #  ===== CMD
+# # .ONESHELL:
+# # clean_obj:
+# # 	for %%i in ($(OBJDIRS)) do (
+# # 		if exist %%i (
+# # 			echo clear directory: %%i
+# # 			rmdir -rf %%i
+# # 			del /Q %%i\\*.*
+# # 		)
+# # 	) 
+
+# # .ONESHELL:
+# # clean_all:
+# # 	if exist $(BUILDDIR) (
+# # 		@rmdir /Q /S  $(BUILDDIR)
+# # 		@echo output directory deleted
+# # 	)
+
+# #private subdirs=$(shell dir /AD /B /S src)
+# subdirs =src
+# submfs += $(foreach subdir,$(subdirs),$(wildcard $(subdir)/*.mk) $(wildcard $(subdir)/makefile))
+# submakes:
+# 	@for %%i in ($(submfs)) do make -C %%~dpi -f %%~nxi
+
+
+
+# .PHONY: clean_obj clean
+
+# .SILENT:clean_obj clean
+
+
+# #.NOTPARALLEL: notparallel  ## MS-DOS doesn't support multi-processing.

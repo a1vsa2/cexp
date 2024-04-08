@@ -17,7 +17,7 @@ int main() {
     printf("%p\n", (char*)(&c));
     printf("%d\n", *((char*)(&c)));
     printf("%d\n", *((short*)(&c)));
-    printf("num: %I64d\n", sizeof(long long));
+    printf("num: %I64d\n", sizeof(long));
     S_INFO *inf = (S_INFO*)malloc(sizeof(S_INFO));
     S_OPT myopts[] = {{1}, {2}};
     inf->opts = myopts;
