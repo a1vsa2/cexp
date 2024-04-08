@@ -95,8 +95,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 }
 
 ULONG WINAPI startServerThred(LPVOID lpParam) {
-    int *port = (int*)lpParam;
-    startIocpServer(*port);
+    int port = *(int*)lpParam;
+    free(lpParam);
+    startIocpServer(port);
 }
 
 char* getLocalIp() {
@@ -116,15 +117,18 @@ void ToggleServer(HWND hwnd) {
     } else {
         char portStr[6] = {0};
         GetText(hwnd, portStr, IDC_PORT_EDIT);
+        
         int port = atoi(portStr);
         if (port <= 0 || port > 65535) {
             MessageBox(0, "port error", "FAIL", MB_OK);
             return;
         } 
+        int *pp = (int*)calloc(1, sizeof(int));
+        *pp = port;
         char* ipStr = getLocalIp();
         HWND sub = GetDlgItem(hwnd, IDC_IP_TEXT);
         SetWindowText(sub, ipStr);
-        HANDLE ht = CreateThread(0, 0, startServerThred, (LPVOID)&port, 0, 0);
+        HANDLE ht = CreateThread(0, 0, startServerThred, (LPVOID)pp, 0, 0);
         CloseHandle(ht);
     }
 
