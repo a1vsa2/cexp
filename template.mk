@@ -4,13 +4,11 @@ This makefile requires GNU Make.
 endif
 
 #######################################
-# end with /
+
 ProjectDir ?=  
 SCRDIR_PREFIX ?=
 SRCDIRS ?=
-
-#INCLUDE_PATH ?= -I../../includes -I../include
-#INCLUDE_PATH += -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/win32
+INCLUDE_PATH ?=
 
 DLLS ?= -lws2_32
 OUTNAME ?=out
@@ -26,10 +24,10 @@ CONTROLFLAGS= -fno-default-inline
 
 
 BUILDDIR =$(ProjectDir)$(OUTNAME)
-OBJDIR_PRE=$(ProjectDir)/$(OUTNAME)/$(SCRDIR_PREFIX)
+OBJDIR_PRE=$(ProjectDir)$(OUTNAME)/$(SCRDIR_PREFIX)
 
 # deferred assignment
-SOURCES ?= $(patsubst ./%,%,$(foreach dir, $(SRCDIRS), $(wildcard $(dir)/*.c)))
+SOURCES ?=$(patsubst ./%,%,$(foreach dir, $(SRCDIRS), $(wildcard $(dir)/*.c)))
 #OBJDIRS ?= $(subst /,\,$(addprefix $(BUILDDIR)\$(SCRDIR_PREFIX)\,$(SRCDIRS))) ## cmd del path
 OBJDIRS ?= $(patsubst %/.,%,$(addprefix $(OBJDIR_PRE),$(SRCDIRS)))
 OBJS = $(notdir $(SOURCES:.c=.o))

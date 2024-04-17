@@ -30,10 +30,9 @@ LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK CustomEditProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 int GetText(HWND hwnd, char* buf, int id);
 void DisplayMessage(char* msg, int len);
-void DebugMsg(char* format, ...);
 int SendMessageToClient(HWND hwnd);
 void ClearRecvArea();
-void ToggleServer();
+void ToggleServer(HWND hwnd);
 extern int startIocpServer(int port);
 
 void OnReceived(char* data, int len) {
@@ -42,6 +41,12 @@ void OnReceived(char* data, int len) {
 
 void OnStatChanged(int runState) {
     state = runState;
+    if (runState > 1) {
+        wchar_t tip[32];
+        wsprintfW(tip, L"启动失败,wsa错误码:%d", runState);
+        MessageBoxW(0, tip, L"fail", MB_OK);
+        return;
+    }
     HWND sub = GetDlgItem(g_hwnd_main, IDC_START_BTN);
     if (!runState) {
         SetWindowText(sub, "start");
@@ -131,6 +136,22 @@ void ToggleServer(HWND hwnd) {
         HANDLE ht = CreateThread(0, 0, startServerThred, (LPVOID)pp, 0, 0);
         CloseHandle(ht);
     }
+}
+
+int SendMessageToClient(HWND hwnd) {
+    int maxLen = 512;
+    int len = GetWindowTextLength(g_hwnd_send);
+    if (len > maxLen - 1) {
+        MessageBoxW(0, L"超出长度限制", L"失败", 0);
+        return 0;
+    }
+    char data[maxLen];
+    GetWindowText(g_hwnd_send, data, len); // append '\0'
+
+    SetWindowText(g_hwnd_send, "");
+    SendMessage(g_hwnd_send, EM_SETSEL, 0, 0);
+
+    return socketWrite(data, len);
 
 }
 
@@ -207,7 +228,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                     ToggleServer(hwnd);
                     break;
                 case IDC_SEND_BTN:
-                    
+                    SendMessageToClient(hwnd);
                     break;
                 case IDC_CLEAR_BTN:
                     ClearRecvArea();

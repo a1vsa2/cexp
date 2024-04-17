@@ -113,7 +113,7 @@ ULONG WINAPI waitReceive(LPVOID lpParam) {
     int num = 0;
     fd_set readSet;
     char* msg;
-    struct timeval timeout = {150, 0};
+    struct timeval timeout = {600, 0};
     int eno = 0;
     while(1) {
         FD_ZERO(&readSet);

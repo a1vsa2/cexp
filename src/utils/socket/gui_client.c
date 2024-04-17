@@ -17,7 +17,6 @@
 #define IDC_CLEAR_BTN 106
 
 #define SEND_BUF_SIZE 1024
-#define SHOW_SEND 0
 
 HWND g_main_hwnd;
 static HWND hwnd_send;
@@ -127,22 +126,24 @@ void ClearDisplayArea() {
 int SendMessageToServer(HWND hwnd) {
     int len = GetWindowTextLength(hwnd);
     if (len > SEND_BUF_SIZE - 1) {
-        MessageBox(0, TEXT("超出长度限制"), "", 1);
+        MessageBoxW(0, L"超出长度限制", L"", 0);
         return 0;
     }
     GetWindowText(hwnd, send_buf, len + 1); // append '\0'
-
+#ifdef SHOW_SEND
     if (len > SEND_BUF_SIZE - 2) {
         send_buf[SEND_BUF_SIZE -2] = 13, send_buf[SEND_BUF_SIZE - 1] = 10;
         len = SEND_BUF_SIZE - 2;
     } else {
         send_buf[len] = 13, send_buf[len + 1] = 10;
     }
+#endif // SHOW_SEND
     // send ok
     int rst = socketWrite(send_buf, len);
     if (rst > 0) {
-        if (SHOW_SEND)
-            DisplayMessage(send_buf, len + 2);
+#ifdef SHOW_SEND
+        DisplayMessage(send_buf, len + 2);
+#endif
         SetWindowText(hwnd_send, "");
         SendMessage(hwnd_send, EM_SETSEL, 0, 0);
     }

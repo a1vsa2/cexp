@@ -33,6 +33,7 @@ static int ecode;
 static int wsacode;
 static Queue* gQueue;
 static SOCKET g_sSocket;
+static SOCKET g_cSocket;
 
 DWORD WINAPI CompletionThread(LPVOID pComPort);
 DWORD WINAPI HandleReceivedThread(LPVOID lpParam);
@@ -40,6 +41,9 @@ DWORD WINAPI HandleReceivedThread(LPVOID lpParam);
 int startIocpServer(int port) {
     wsacode = ReadySocket(0, port);
     if (wsacode) {
+        if (cbs->stateChanged) {
+            cbs->stateChanged(wsacode + 1);
+        }
         return wsacode;
     }
     int addrLen = sizeof(SOCKADDR_IN);
@@ -71,6 +75,7 @@ int startIocpServer(int port) {
         clientCtx->wsaBuf.len = BUF_SIZE;
         clientCtx->wsaBuf.buf = clientCtx->buffer;
         flags = 0;
+        g_cSocket = new_socket;
 
         CreateIoCompletionPort((HANDLE)new_socket, g_hcp, (ULONG_PTR)clientCtx, 0);
         OVERLAPPED *ovp = (OVERLAPPED*)calloc(1, sizeof(OVERLAPPED));
@@ -78,11 +83,12 @@ int startIocpServer(int port) {
         if (ecode == SOCKET_ERROR && (wsacode = WSAGetLastError()) != ERROR_IO_PENDING) {
             free(ovp);
             closesocket(new_socket);
+            g_cSocket = (ULONG_PTR)NULL;
             printf("WSARecv error:%d\n", wsacode);
             break;
         }
     }
-    
+    // __debugbreak();
     for (int i = 0; i< NUM_THREADS; i++) {
         PostQueuedCompletionStatus(g_hcp, 0, (ULONG_PTR)0, 0);
     }
@@ -121,6 +127,7 @@ int ReadySocket(char* serverIp, int port) {
         }
         winsock_init = 1;
     }
+    // TODO set reuse
     g_sSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_IP); // 会创建支持重叠 I/O 操作作为默认行为的套接字
     SOCKADDR_IN sAddr;
     sAddr.sin_family = AF_INET;
@@ -158,6 +165,7 @@ DWORD WINAPI CompletionThread(LPVOID pComPort) {
             free(overlapped_ptr);
             if (clientCtx) {
                 closesocket(clientCtx->cSocket);
+                g_cSocket = (ULONG_PTR)NULL;
                 free(clientCtx);
                 clientCtx = NULL;
                 continue;
@@ -182,6 +190,7 @@ DWORD WINAPI CompletionThread(LPVOID pComPort) {
     }
     if (clientCtx) {
         closesocket(clientCtx->cSocket);
+        g_cSocket = (ULONG_PTR)NULL;
         free(clientCtx);
     }
     free(overlapped_ptr);
@@ -205,7 +214,9 @@ void SetCallBacks(socket_cbs* cbss) {
 }
 
 int socketWrite(char* data, int len) {
-    
+    if (g_cSocket) {
+        return send(g_cSocket, data, len, 0);
+    }
 }
 
 

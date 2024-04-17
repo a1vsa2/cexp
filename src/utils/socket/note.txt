@@ -1,0 +1,96 @@
+OSI:                        TCP/IP
+————————————————————————————————————————————————————                            
+7   应用层      |               应用层  
+6   表示层      |           (各种协议http,ftp
+5   会话层      |           SMTP,DNS,SSH,Telnet)
+————————————————————————————————————————————————————
+4   传输层      |               传输层(TCP/UDP...)                   +port   datagrams
+
+————————————————————————————————————————————————————
+3   网络层      |               网际层(Internet Layer Protocol)      +ip     packet
+                                (IP, ICMP,ARP(ipv4),RIP,OSPF)
+————————————————————————————————————————————————————
+2   链路层      |               网络接口层Network Access Layers      +mac    frame
+1   物理层      |               (Ethernet)
+————————————————————————————————————————————————————
+
+ICMP: Internet Control Message Protocol, ping发送的就是ICMP echo
+
+
+
+
+Application/Uses of TCP/IP
+Some Real-Time Applications are:
+
+Simple Mail Transfer Protocol(SMTP): It helps to send email to another email address.
+File Transfer Protocol(FTP): It is used for sending large files.
+Dynamic Host Configure Protocol(DHCP): It assigns the IP address.
+Telnet: Bi-directional text communication via a terminal application.
+HyperText Transfer Protocol(HTTP): Used to transfer the web pages.
+Domain Name System(DNS): It translates the website name to IP addresses.
+Simple Network Time Protocol(SNTP): It provides the time of a day to the network devices.
+
+
+网络字节顺序都是big-endian
+
+https://www.rfc-editor.org/rfc/rfc9293
+==========================================================================================
+
+Pseudo-header components for IPv4:
+                +--------+--------+--------+--------+
+                |           Source Address          |
+                +--------+--------+--------+--------+
+                |         Destination Address       |
+                +--------+--------+--------+--------+
+                |  zero  |  PTCL  |    TCP Length   |
+                +--------+--------+--------+--------+
+
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |          Source Port          |       Destination Port        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                        Sequence Number                        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                    Acknowledgment Number                      |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |  Data |           |U|A|P|R|S|F|                               |
+   | Offset| Reserved  |R|C|S|S|Y|I|            Window             |
+   |       |           |G|K|H|T|N|N|                               |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |           Checksum            |         Urgent Pointer        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                    Options                    |    Padding    |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                             data                              |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+                            TCP Header Format
+
+          Note that one tick mark represents one bit position.
+
+Data Offset (DOffset): 4 bits
+The number of 32-bit words in the TCP header. This indicates where the data begins. 
+The TCP header (even one including options) is an integer multiple of 32 bits long.
+
+
+https://www.rfc-editor.org/rfc/rfc791
+A summary of the contents of the internet header follows:
+
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |Version|  IHL  |Type of Service|          Total Length         |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |         Identification        |Flags|      Fragment Offset    |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |  Time to Live |    Protocol   |         Header Checksum       |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                       Source Address                          |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                    Destination Address                        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                    Options                    |    Padding    |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
