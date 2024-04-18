@@ -111,9 +111,10 @@ void runReceive() {
 ULONG WINAPI waitReceive(LPVOID lpParam) {
     char buffer[BUF_SIZE] = {0};
     int num = 0;
+    short to_sec = 300;
     fd_set readSet;
     char* msg;
-    struct timeval timeout = {600, 0};
+    struct timeval timeout = {to_sec, 0};
     int eno = 0;
     while(1) {
         FD_ZERO(&readSet);
@@ -136,15 +137,14 @@ ULONG WINAPI waitReceive(LPVOID lpParam) {
                 DebugMsg("connection closed");
                 break;
             }
-            timeout.tv_sec = 0;
-            FD_ZERO(&readSet);
-            FD_SET(client_fd, &readSet);
-            int hasNext = select(0, &readSet, 0, 0, &timeout);
-            timeout.tv_sec = 30;
-            if (hasNext == 0) {
-                buffer[num] = 13, buffer[num + 1] = 10;
-                num += 2;
+            u_long bytesAvailable = 0;
+            if (ioctlsocket(client_fd, FIONREAD, &bytesAvailable) == 0) {
+                if (bytesAvailable == 0) {
+                    buffer[num] = 13, buffer[num + 1] = 10;
+                    num += 2;
+                }
             }
+
             buffer[num] = 0;
             if (cbs->dataReceived) {
                 cbs->dataReceived(buffer, num);

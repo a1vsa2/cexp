@@ -72,7 +72,7 @@ typedef struct _ICMP_HDR
 	unsigned long rest;
 } ICMP_HDR;
 
-struct ARP_DATA {
+typedef struct _ARP_DATA {
 	unsigned char hardwareType[2]; 	// Ethernet: 0x0001
 	unsigned short proType; 	// ipv4: 0x8000
 	unsigned char hardwareSize; 	// mac size
@@ -82,6 +82,6 @@ struct ARP_DATA {
 	char senderIp[4];
 	char targetMac[6];
 	char targetIp[4];
-};
+} ARP_DATA;
 
 #endif // __PRO_FORMAT_H_

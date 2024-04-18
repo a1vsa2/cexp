@@ -1,10 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <WinSock2.h>
-
+#include <iphlpapi.h> 
 #include <pcap.h>
 
 #include "pro_format.h"
+
+// https://npcap.com/guide/wpcap
 
 // gcc tcp_send.c -o ts.exe -Ld:/ztestfiles/libs -lwpcap -lPacket -lws2_32 -I../../includes -Id:/ztestfiles/libs/include
 
@@ -22,24 +24,39 @@ USHORT cal_checksum(USHORT *ptr, int nbytes);
 
 pcap_t* open_listen();
 int send_data(char* data, int len);
-
+void handle_recv(pcap_t *nethandle, char* filter_expression);
+void get_mac();
 
 pcap_t* gnetHandler;
 pcap_if_t *target_dev;
 
-int main() {
+char** gv;
+
+int main(int argc, char** argv) {
+
+    gnetHandler = open_listen();
+    // handle_recv(gnetHandler, "dst port 8888");
+    return 0;
+
     char *srcIp = "127.0.0.1";
     char *dstIp = "127.0.0.1";
     short srcPort = 0x2324;
     short dstPort = 0x2526;
     char* payload = "ab";
     short payloadLen = strlen(payload);
-
-    gnetHandler = open_listen();
+    if (argc < 9) {
+        return -1;
+    }
+    gv = argv;
+    srcIp = argv[1];
+    dstIp = argv[2];
+    srcPort = atoi(argv[3]);
+    dstPort = atoi(argv[4]);
+    payload = argv[8];
+    payloadLen = strlen(payload);
 
     int frameLen;
     char* frame = get_tcp_frame(srcIp, dstIp, srcPort, dstPort, payload, payloadLen, &frameLen);
-
     send_data(frame, frameLen);
 
     free(frame);
@@ -76,7 +93,12 @@ char* get_tcp_frame(char* srcIp, char* dstIp, short srcPort, short dstPort,
     fill_ip_header(&ipHeader, srcIp, dstIp, IPPROTO_TCP, payloadLen);
     fill_tcp_header(&tcpHeader, srcPort, dstPort, 0);
 
-
+    u_short identification = (u_short)atoi(gv[5]);
+    u_long seq = atol(gv[6]);
+    u_long ack = atol(gv[7]);
+    ipHeader.identification = htons(identification);
+    tcpHeader.seq = htonl(seq);
+    tcpHeader.ack = htonl(ack);
 
     fill_tcp_check_buffer(checkBuf, &ipHeader, &tcpHeader, payload, payloadLen);
     u_short chksum = cal_checksum((u_short*)checkBuf, 32 + (payloadLen + 1 >> 1 << 1));
@@ -208,8 +230,15 @@ pcap_t* open_listen() {
         exit(1);
     }
     
-    int count = 0;
+    u_char count = 0;
+    u_char ri[32] = {0};
+    int i = 0;
     for (d = alldevs; d; d = d->next) {
+        i++;
+        if (!((d->flags & PCAP_IF_LOOPBACK) != 0 || (d->flags & 0x28) == 8)) {
+            continue;
+        }
+        ri[i] = 1;
         ++count;
         printf("%d. ", count);
         if (d->description) {
@@ -228,7 +257,7 @@ pcap_t* open_listen() {
         return 0;
     }
 
-    UCHAR targetNum = 8;
+    UCHAR targetNum = 2;
     printf("Enter the interface number (1-%d):", count);
     scanf("%d", &targetNum);
 
@@ -237,13 +266,21 @@ pcap_t* open_listen() {
         printf("incorrect interface number\n");
         return 0;
     }
+    for (int j = 1, k = 0; j <= i;j++) {
+        if (ri[j] == 1) {
+            k++;
+        }
+        if (k == targetNum) {
+            targetNum = j;
+            break;
+        }
+    }
 
-    int j = 0;
     d = alldevs;
     pcap_if_t *pre_dev = alldevs;
     pcap_if_t *next_dev;
 
-    for (int j = 0; j < targetNum - 1; j++) {
+    for (i = 0; i < targetNum - 1; i++) {
         pre_dev = d;
         d = d->next;
     }
@@ -256,7 +293,12 @@ pcap_t* open_listen() {
     target_dev->next = NULL;
     pcap_freealldevs(alldevs);
 
-    if ((netHandler = pcap_open_live(target_dev->name, 65536, PCAP_OPENFLAG_PROMISCUOUS, 1000, errbuf)) == NULL) {
+    // pack buffer timeout: 数据包缓冲超时,在数据包到达后延迟一段时间再传递,使一次能够处理多个数据包
+    // pcap_set_timeout(1000) pcap_set_immediate_mode(1)
+    int snapLen = 0x010000;
+    int packet_buf_to_ms = 10000;
+    int mode = PCAP_OPENFLAG_PROMISCUOUS;
+    if ((netHandler = pcap_open_live(target_dev->name, snapLen, mode, packet_buf_to_ms, errbuf)) == NULL) {
         fprintf(stderr, "\nUnable to open the adapter. %s is not supported by Npcap\n", d->name);
         pcap_freealldevs(alldevs);
         return 0;
@@ -265,14 +307,26 @@ pcap_t* open_listen() {
     return netHandler;
 }
 
-// 处理应答
-void handle_response(pcap_t *adhandle) {
+
+void handle_recv(pcap_t *nethandle, char* filter_expression) {
     struct pcap_pkthdr *header;
     const u_char *pkt_data;
     int res;
 
+    // https://npcap.com/guide/wpcap/pcap-filter.html
+    struct bpf_program filter;
+    if (pcap_compile(nethandle, &filter, filter_expression, 0, PCAP_NETMASK_UNKNOWN) == -1) {
+        printf("Couldn't parse filter %s: %s\n", filter_expression, pcap_geterr(nethandle));
+        return;
+    }
+    if (pcap_setfilter(nethandle, &filter) == -1) {
+        printf("Couldn't install filter %s: %s\n", filter_expression, pcap_geterr(nethandle));
+        return;
+    }
+
     // 捕获数据包
-    res = pcap_next_ex(adhandle, &header, &pkt_data);
+    while(1) {
+    res = pcap_next_ex(nethandle, &header, &pkt_data);
     if (res == 1) {
         printf("Response received!\n");
         // 处理应答数据包
@@ -283,8 +337,11 @@ void handle_response(pcap_t *adhandle) {
         printf("\n");
     } else if (res == 0) {
         // 超时，继续等待
+        printf("timeout for wait packet\n");
     } else if (res == -1 || res == -2) {
-        printf("Error reading the packet: %s\n", pcap_geterr(adhandle));
+        printf("Error reading the packet: %s\n", pcap_geterr(nethandle));
+        break;
+    }
     }
 }
 
