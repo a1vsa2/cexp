@@ -14,8 +14,15 @@ OSI:                        TCP/IP
 1   物理层      |               (Ethernet)
 ————————————————————————————————————————————————————
 
-ICMP: Internet Control Message Protocol, ping发送的就是ICMP echo
-
+https://www.rfc-editor.org/rfc/rfc792
+ICMP: Internet Control Message Protocol:
+    Occasionally a
+    gateway or destination host will communicate with a source host, for
+    example, to report an error in datagram processing.  For such
+    purposes this protocol, the Internet Control Message Protocol (ICMP),
+    is used.  ICMP, uses the basic support of IP as if it were a higher
+    level protocol, however, ICMP is actually an integral part of IP, and
+    must be implemented by every IP module.
 
 
 

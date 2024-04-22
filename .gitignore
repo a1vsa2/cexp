@@ -2,5 +2,10 @@
 ### VS Code ###
 .vscode/
 
+**/*.exe
+
+aatest.c
+ghelp.txt
+
 out
 bin

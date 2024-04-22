@@ -87,7 +87,7 @@ ifneq "" "$(EXENAME)"
 	$(BUILDDIR)/$(EXENAME).exe
 endif
 
-exe:$(ts)
+discardexe:$(ts)
 ifneq "" "$(ts)"
 #	@echo generating executeable $^
 #	$(call gen_exe, $(subst \,/,$^))
