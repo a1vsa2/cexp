@@ -27,14 +27,18 @@ BUILDDIR =$(ProjectDir)$(OUTNAME)
 OBJDIR_PRE=$(ProjectDir)$(OUTNAME)/$(SCRDIR_PREFIX)
 
 # deferred assignment
-SOURCES ?=$(patsubst ./%,%,$(foreach dir, $(SRCDIRS), $(wildcard $(dir)/*.c)))
+SOURCES ?=$(foreach dir, $(SRCDIRS), $(wildcard $(dir)/*.c))
+CPP_SOURCES ?=$(foreach dir, $(SRCDIRS), $(wildcard $(dir)/*.cpp))
+
 #OBJDIRS ?= $(subst /,\,$(addprefix $(BUILDDIR)\$(SCRDIR_PREFIX)\,$(SRCDIRS))) ## cmd del path
 OBJDIRS ?= $(patsubst %/.,%,$(addprefix $(OBJDIR_PRE),$(SRCDIRS)))
 OBJS = $(notdir $(SOURCES:.c=.o))
+OBJS+=$(notdir $(CPP_SOURCES:.cpp=.o))
 EXENAME ?= default
 
 vpath
 vpath %.c $(SRCDIRS)
+vpath %.cpp $(SRCDIRS)
 #vpath %.o $(OBJDIRS)
 vpath %.o $(BUILDDIR)
 vpath %.d $(OBJDIRS)
@@ -58,6 +62,10 @@ endif
 	@echo building object $@
 #	$(COMPILE.c) $(INCLUDE_PATH) -o $(OBJDIR_PRE)$(subst .c,.o,$<) $<
 	$(COMPILE.c) $(INCLUDE_PATH) -o $(BUILDDIR)/$@ $<
+
+%.o: %.cpp | $(OBJDIRS)
+	@echo building object $@
+	$(COMPILE.cpp) $(INCLUDE_PATH) -o $(BUILDDIR)/$@ $<
 
 $(OBJDIR_PRE)%.d:%.c | $(OBJDIRS)
 	@echo generating dependency file $@

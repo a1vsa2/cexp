@@ -18,7 +18,7 @@ int send_data(pcap_t* netHandler, char* data, int len) {
         return -1;
     }
 
-    printf("Packet sent successfully!\n");
+    // printf("Packet sent successfully!\n");
     return 0;
 }
 
@@ -144,7 +144,7 @@ int dev_listen(pcap_t **ppHandler, char* devName) {
     // pack buffer timeout: 数据包缓冲超时,在数据包到达后延迟一段时间再传递,使一次能够处理多个数据包
     // pcap_set_timeout(1000) pcap_set_immediate_mode(1)
     int snapLen = 0x010000;
-    int packet_buf_to_ms = 10000;
+    int packet_buf_to_ms = 1000;
     int mode = PCAP_OPENFLAG_PROMISCUOUS;
     *ppHandler = pcap_open_live(devName, snapLen, mode, packet_buf_to_ms, errbuf);
     if (*ppHandler == NULL) {

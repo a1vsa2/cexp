@@ -1,6 +1,7 @@
 #include <winsock2.h>
 #include <stdio.h>
 #include <windows.h>
+#include <commctrl.h>
 // #include <windowsx.h>
 
 #include "mysocket.h"
@@ -15,6 +16,7 @@
 #define IDC_DISPLAY_EDIT 104
 #define IDC_SEND_EDIT 105
 #define IDC_CLEAR_BTN 106
+
 
 #define SEND_BUF_SIZE 1024
 
@@ -36,6 +38,14 @@ void DisplayMessage(char* msg, int len);
 void DebugMsg(char* format, ...);
 int SendMessageToServer(HWND hwnd);
 
+void popDlg(char* format, ...) {
+    char tmp[64]= {0};
+    va_list aptr;
+    va_start(aptr, format);
+    int len = vsprintf(tmp, format, aptr);
+    va_end(aptr);
+    MessageBox(0, tmp, "ok", MB_OK);
+}
 
 void OnReceived(char* data, int len) {
     DisplayMessage(data, len);
@@ -68,6 +78,11 @@ void ToggleConnection(HWND hwnd) {
     }
 }
 
+int set_font(HWND hwnd, LPARAM lparam) {
+    SendMessage(hwnd, WM_SETFONT, (WPARAM)lparam, TRUE);
+    return 1;
+}
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                    LPSTR lpCmdLine, int nCmdShow) {
     MSG msg;
@@ -84,7 +99,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     int screenWidth = GetSystemMetrics(SM_CXSCREEN);
     int screenHeight = GetSystemMetrics(SM_CYSCREEN);
     int wwidth = 500;  // 窗口宽度
-    int wheight = 400;  // 窗口高度
+    int wheight = 430;  // 窗口高度
     int posX = (screenWidth - wwidth) / 2;
     int posY = (screenHeight - wheight) / 2;
 
@@ -101,11 +116,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     cbs.stateChanged = &OnStatChanged;
     SetCallBacks(&cbs);
 
+    HFONT hFont = CreateFont(15, 0, 0, 0, FW_THIN, FALSE, FALSE, FALSE, DEFAULT_CHARSET, \
+                OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH | FF_DONTCARE, "楷体");
+    g_originalEditProc = (WNDPROC)SetWindowLongPtr(hwnd_send, GWLP_WNDPROC, (LONG_PTR)CustomEditProc);
+    
     // EnableWindow(hwnd_display, 0);
     // EnableScrollBar(hwnd_display, SB_CTL, ESB_ENABLE_BOTH);
     ShowWindow(g_main_hwnd, nCmdShow);
-    UpdateWindow(g_main_hwnd);
 
+
+    EnumChildWindows(g_main_hwnd, set_font, (LPARAM)&hFont);
+        UpdateWindow(g_main_hwnd);
+    // SendMessage(hwnd_send, WM_SETFONT, (WPARAM)hFont, TRUE);
+    // InvalidateRect(g_main_hwnd, NULL, TRUE);
     while (GetMessage(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
@@ -153,15 +176,20 @@ int SendMessageToServer(HWND hwnd) {
 
 LRESULT CALLBACK CustomEditProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch (msg) {
-    case WM_CHAR:
-        if (wParam == VK_RETURN) {
-            if ((GetKeyState(VK_SHIFT) & 0x8000) == 0) {
-                SendMessageToServer(hwnd);
-                return 0;
+        case WM_CHAR:
+            if (wParam == VK_RETURN) {
+                if ((GetKeyState(VK_SHIFT) & 0x8000) == 0) {
+                    SendMessageToServer(hwnd);
+                    return 0;
+                }
             }
-        }
-        break;
+            break;
+        case WM_SETCURSOR:
+            SetCursor(LoadCursor(NULL, IDC_IBEAM));
+            return 0;
+            break;
     }
+   
     // 对于所有其他消息，调用原始的窗口过程
     return CallWindowProc(g_originalEditProc, hwnd, msg, wParam, lParam);
 }
@@ -171,12 +199,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     long CF2 = WS_VISIBLE | WS_CHILD;
     long CF3 = CF2 | WS_BORDER;
     switch (msg) {
-        case WM_CREATE:
+        case WM_CREATE: {
             CreateWindow(TEXT("static"), TEXT("IP Address:"),
                          CF2, 20, 20, 90, 20, 
                          hwnd, NULL, NULL, NULL);
-            CreateWindow(TEXT("edit"), TEXT("127.0.0.1"),
-                         CF3, 120, 20, 140, 20,
+            CreateWindow(WC_IPADDRESS, TEXT("127.0.0.1"),
+                         CF3 , 120, 20, 140, 20,
                          hwnd, (HMENU)IDC_IP_TEXT, NULL, NULL);
                          
             CreateWindow(TEXT("static"), TEXT("Port:"),
@@ -204,16 +232,27 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                          20, 260, 450, 50,
                          hwnd, (HMENU)IDC_SEND_EDIT, NULL, NULL);
 
-    HFONT hFont = CreateFont(15, 0, 0, 0, FW_THIN, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, \
-    CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH | FF_DONTCARE, "楷体");
-    SendMessage(hwnd_display, WM_SETFONT, (WPARAM)hFont, TRUE);
-    SendMessage(hwnd_send, WM_SETFONT, (WPARAM)hFont, TRUE);
-    g_originalEditProc = (WNDPROC)SetWindowLongPtr(hwnd_send, GWLP_WNDPROC, (LONG_PTR)CustomEditProc);
+            HFONT hFont = CreateFont(15, 0, 0, 0, FW_THIN, FALSE, FALSE, FALSE, DEFAULT_CHARSET, \
+                OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH | FF_DONTCARE, "楷体");
+            // SendMessage(hwnd_display, WM_SETFONT, (WPARAM)hFont, TRUE);
+            // SendMessage(hwnd_send, WM_SETFONT, (WPARAM)hFont, TRUE);
+            // g_originalEditProc = (WNDPROC)SetWindowLongPtr(hwnd_send, GWLP_WNDPROC, (LONG_PTR)CustomEditProc);
+
             CreateWindow(TEXT("button"), TEXT("clear"),
                          CF2 | BS_PUSHBUTTON ,
                          220, 320, 60, 20,
                          hwnd, (HMENU)IDC_CLEAR_BTN, NULL, NULL);
+
+            CreateWindow(TEXT("button"), TEXT("http"),
+                         CF2 | BS_AUTORADIOBUTTON ,
+                         20, 320, 60, 20,
+                         hwnd, NULL, NULL, NULL);
+            CreateWindow(TEXT("button"), TEXT("https"),
+                         CF2 | BS_AUTORADIOBUTTON ,
+                         20, 350, 60, 20,
+                         hwnd, NULL, NULL, NULL);
             break;
+        }
         case WM_COMMAND:
             switch (LOWORD(wParam)) {
                 case IDC_CONN_BTN:
@@ -224,6 +263,17 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                     break;
             }
             break;
+        // case WM_SETCURSOR:
+        //     if (LOWORD(lParam) == HTCLIENT) {
+        //         SetCursor(LoadCursor(NULL, IDC_ARROW)); 
+        //         return TRUE;
+        //     }
+      
+        case WM_SETFONT: {
+            MessageBox(0, "set font", "ok", MB_OK);
+
+            return 0;
+        }
         case WM_DESTROY:
             PostQuitMessage(0);
             break;
