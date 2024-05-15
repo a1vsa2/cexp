@@ -20,7 +20,7 @@ exe: Main_net.o npcap_utils.o nets.o pro_frame.o
 client.exe: myclient.o gui_client.o
 	gcc $^ -o ../out/client.exe -lws2_32 -mwindows
 
-sslserver.exe: sslserver.o
+sslserver.exe: myserver.o
 	g++ $^ -o ../out/$@  -Ld:/ztestfiles/libs -lws2_32 -lssl-3-x64 -lcrypto-3-x64
 
 include ../template.mk

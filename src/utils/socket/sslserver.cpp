@@ -108,7 +108,7 @@ DWORD WINAPI serverAccpetThread(LPVOID lparam) {
         SSL_read(ssl, buf, 256);
         printf("recv msg: %s\n", buf);
         // CreateThread(0, 0, taskThread, 0, 0, 0);
-        SSL_write(ssl, "hello", 5);
+        SSL_write(ssl, "HTTP/1.1 200 OK\nContent-Length: 5\n\nhello\n", 42);
         // 关闭 SSL 连接
         SSL_shutdown(ssl);
         SSL_free(ssl);

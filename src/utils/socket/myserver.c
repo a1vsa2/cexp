@@ -6,6 +6,8 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
+// #include "openssl/applink.c"
+
 #define MAX_CONNS 2
 
 #define SERVER_CERT_FILE "d:/ztestfiles/security/server.crt"
@@ -104,7 +106,7 @@ DWORD WINAPI ServerThread(LPVOID param) {
                 } else if (numRead > 0) { // 假设一次读取完整
                     buffer[numRead] = '\0';
                     printf("received msg: %s\n", buffer);
-                    send(client, "HTTP/1.1 200 OK\nContent-Length: 5\n\nhello\n", 42, 0);
+                    send(client, "HTTP/1.1 200 OK\nContent-Length: 5\n\nhello\n", 41, 0);
                     if (numRead >= 4 && strcmp(buffer + (numRead - 4), "exit") == 0) {
                         goto endloop;
                     }
@@ -241,11 +243,15 @@ int SSLServerThread() {
                         rwConns[i] = 0;
                         count--;
                     }
-                    
                 } else if (numRead > 0) { // 假设一次读取完整
                     buffer[numRead] = '\0';
                     printf("received msg[%d]: \n%s", numRead, buffer);
-                    SSL_write(rwConns[i], "HTTP/1.1 200 OK\nContent-Length: 5\n\nhello\n", 41);
+                    SSL_write(rwConns[i], 
+                        "HTTP/1.1 200 OK\r\n"
+                        "Content-Length: 7\r\n"
+                        "Content-Type: text/plain\r\n"
+                        "\r\n"
+                        "hellh\r\n", 71); // windows curl 包含换行符
                 }
             }
         }
